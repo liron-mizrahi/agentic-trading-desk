@@ -1,0 +1,70 @@
+# ── Secrets ───────────────────────────────────────
+.env
+*.pem
+*.key
+*.jks
+credentials.json
+
+# ── Python ────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+.pytest_cache/
+*.pyc
+
+# ── Virtual environments ─────────────────────────
+.venv/
+venv/
+env/
+*.venv
+
+# ── Node / Next.js ───────────────────────────────
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# ── IDE / Editor ─────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ── Runtime state ────────────────────────────────
+pending_orders.json
+*.log
+*.pid
+
+# ── Cache ────────────────────────────────────────
+.yield_cache/
+
+# ── Docker ───────────────────────────────────────
+docker-compose.override.yml
+pgdata/
+
+# ── Media / Generated ────────────────────────────
+*.png
+*.jpg
+*.svg
+*.pdf
+!docs/**/*.png
+!docs/**/*.jpg
+
+# ── OpenClaw / Agent state ───────────────────────
+openclaw-workspace-state.json
+heartbeat-state.json
+
+# ── Misc cruft ───────────────────────────────────
+\[internal\]
+.order_sequence
+=
+reading
+ERROR
+transferring
+*.bak

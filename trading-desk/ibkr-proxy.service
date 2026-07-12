@@ -1,0 +1,15 @@
+[Unit]
+Description=IBKR Gateway TCP Proxy (Docker → localhost)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/liron/.openclaw/agentic-trading-desk-workspace/trading-desk/ibkr_proxy.py
+Restart=always
+RestartSec=5
+User=liron
+WorkingDirectory=/home/liron/.openclaw/agentic-trading-desk-workspace/trading-desk
+
+[Install]
+WantedBy=multi-user.target

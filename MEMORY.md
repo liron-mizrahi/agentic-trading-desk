@@ -13,7 +13,7 @@
 - **Data sources:** Interactive Brokers (REST API via Client Portal Gateway), U.S. Treasury.gov (yield curve CSV), Google Finance (analyst ratings)
 
 ## Repository
-- **Source:** https://github.com/Oft3r/agentic-trading-desk
+- **Source:** https://github.com/liron-mizrahi/agentic-trading-desk
 - **Status:** Converted from Claude Code SKILL pattern to OpenClaw agent on 2026-07-10
 
 ## IBKR Access
@@ -29,6 +29,11 @@
 5. **HTML visualization only on Fridays** — part of weekly review ritual.
 6. **Explicit confirmation required** before any action.
 7. **Full-stack testing mandatory** — every feature, fix, or change must be tested on BOTH backend and frontend before shipping. Backend: verify API responses, WebSocket, data endpoints. Frontend: verify page loads, JS hydration, buttons/links work, status LEDs. Never deploy without end-to-end verification.
+
+## Communication Preferences
+- **Report progress during tasks** — when asked to do something, give status updates along the way. Don't go silent then come back with "done". Check in: "doing X...", "Y is working, fixing Z now...", etc.
+- **Don't leave me hanging** — if something takes >30s, say what's happening. If there's an error, say what it is and what you're doing about it. Finished? Say "done" with the result.
+- **Pixel 8a user** — prefers concise, direct updates. Bullet points welcome.
 
 ## Discord Channels
 - **#trading-desk** (1525113313128747028) — Command channel for conversation with this agent (no mentions required, requireMention: false)
@@ -97,3 +102,32 @@
 ### Strategies Dashboard Fixes (2026-07-12)
 - `pipelines.py` router — `/api/v1/pipelines/runs` now properly handles both momentum_dip and three_pillar strategies with correct SQL joins.
 - Frontend builds and serves correctly (Dockerfile now runs `rm -rf /app/.next` before dev start to avoid stale chunks).
+
+## Session Checkpoint — 2026-07-13 02:28 UTC
+**Last session:** Backtest 500 error fixed, Strategies Dashboard confirmed working, doc updates committed & pushed.
+
+### Current State
+- **Backend:** FastAPI on `:8000`. 6 Docker containers all running. Backtest API returns 200 with full results.
+- **Frontend:** Next.js on `:3000`. Pipelines/Strategies pages load data correctly. Proxy passes through to backend.
+- **Pipelines DB:** Momentum-dip has 7 symbols (1 BUY) from 2026-07-11. Three-pillar has 10 symbols from same date.
+- **Scripts volume:** `../scripts:/scripts` mounted read-only on backend container. backtester.py works at `/scripts/backtester.py`.
+- **Git:** Clean working tree, pushed to `origin/main`. Last commit `c99205d`.
+
+### Recent Changes
+| File | Change |
+|------|--------|
+| `scripts/backtester.py` | New — Time-Warp Backtesting Engine |
+| `scripts/indicators.py` | Fixed bollinger() 4→5 return values (added bandwidth) |
+| `scripts/backtester.py` | `--json` mode: human output → stderr, clean JSON → stdout |
+| `backend/.../backtest.py` | New router: POST /api/backtest/run, GET /results |
+| `backend/.../main.py` | Added backtest router |
+| `backend/.../pipelines.py` | Fixed DB joins for both strategies |
+| `docker-compose.yml` | Added `../scripts:/scripts` volume, frontend → `npm run dev` |
+| `frontend/Dockerfile` | Added `rm -rf /app/.next` before dev start |
+| `frontend/.../backtest/page.tsx` | New — Backtest UI page |
+| `MEMORY.md` | Updated with session checkpoint |
+
+### Known To-dos
+- Regenerate pipeline runs (current data from 2026-07-11 is stale)
+- Keep an eye on frontend chunk caching (Next.js dev mode)
+- Strategies page: initial server-render shows empty state; JS hydrates after ~300ms

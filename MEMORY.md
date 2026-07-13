@@ -28,6 +28,7 @@
 4. **Macro source:** Investing.com only (no Polymarket — security risk).
 5. **HTML visualization only on Fridays** — part of weekly review ritual.
 6. **Explicit confirmation required** before any action.
+7. **Full-stack testing mandatory** — every feature, fix, or change must be tested on BOTH backend and frontend before shipping. Backend: verify API responses, WebSocket, data endpoints. Frontend: verify page loads, JS hydration, buttons/links work, status LEDs. Never deploy without end-to-end verification.
 
 ## Discord Channels
 - **#trading-desk** (1525113313128747028) — Command channel for conversation with this agent (no mentions required, requireMention: false)
@@ -39,6 +40,11 @@
 
 ## Strategies Dashboard (2026-07-11)
 - **Pipelines → Strategies** renamed throughout app (nav, URLs, page title)
+- New `/strategies` page with Finviz-style scrollable data grid
+- **⚠ When adding a new strategy, always update:**
+  - `frontend/src/app/strategies/guide/page.tsx` — Strategy Guide documentation
+  - `frontend/src/app/strategies/backtest/page.tsx` — Backtest strategy options
+  - `SKILL.md` — This operations manual
 - New `/strategies` page with Finviz-style scrollable data grid
 - Columns ordered by funnel filter order, strategy-dependent (momentum_dip vs three_pillar)
 - Click any row → expandable detail panel below table with step pass/fail gauges, LLM reasoning
@@ -76,3 +82,18 @@
 ### Two Trading Strategies
 1. **Three-Pillar Framework** (eod_pipeline.py) — Trend/Momentum/Macro-Sentiment (-6 to +6). Rebound/reversal entry with capital rotation.
 2. **Momentum-Dip Catalyst** (momentum_dip_pipeline.py) — RSI-2 mean reversion. SMA200 + CHOP filters. Sector-adapted thresholds. QS Exit (close > prev high). Size reduction by volatility.
+
+## Backtesting Engine (2026-07-12)
+- **scripts/backtester.py** — Time-Warp Backtesting Engine for all strategies (three_pillar, momentum_dip, squeeze). Chronological simulation with no lookahead bias. Supports --sectors filter, --json output, --benchmark comparison.
+- **Backtest API:** `POST /api/backtest/run` via `trading-desk/backend/app/routers/backtest.py`. Triggers subprocess, persists results to PostgreSQL `backtest_results` table.
+- **Frontend:** `/strategies/backtest` page with strategy selection, sector picker, date range, equity curve SVG charts, results table.
+- **Docker:** Backend volume mount `../scripts:/scripts` so subprocess can find backtester.py at `/scripts/backtester.py`.
+
+### Backtest Fixes Applied (2026-07-12)
+- `indicators.py` `bollinger()` — now returns 5 values (was missing bandwidth, caused ValueError on unpack).
+- `backtester.py` `--json` mode — all human-readable output routed to stderr so stdout is clean JSON.
+- `backtest.py` router — `script_dir` uses `/scripts` path with fallback; DB queries rewritten to use SQLAlchemy `_get_async_sessionmaker()` (was calling `get_db()` async generator directly).
+
+### Strategies Dashboard Fixes (2026-07-12)
+- `pipelines.py` router — `/api/v1/pipelines/runs` now properly handles both momentum_dip and three_pillar strategies with correct SQL joins.
+- Frontend builds and serves correctly (Dockerfile now runs `rm -rf /app/.next` before dev start to avoid stale chunks).

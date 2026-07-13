@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { Filter, Calendar, AlertTriangle, TrendingUp, ChevronDown, CheckCircle2, XCircle, BarChart3, Layers, GitFork, GripVertical, X, Minimize2, Maximize2, BookOpen, Zap } from "lucide-react";
+import { Filter, Calendar, AlertTriangle, TrendingUp, ChevronDown, CheckCircle2, XCircle, BarChart3, Layers, GitFork, GripVertical, X, Minimize2, Maximize2, BookOpen, Zap, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
 import { StrategyChart } from "@/components/StrategyChart";
@@ -425,6 +425,13 @@ export default function StrategiesPage() {
           >
             <BookOpen className="h-3.5 w-3.5" />
             Strategy Guide
+          </Link>
+          <Link
+            href="/strategies/backtest"
+            className="flex items-center gap-1.5 rounded-lg border border-surface-border px-3 py-1.5 text-xs text-accent-green hover:bg-accent-green/5 transition-colors"
+          >
+            <PlayCircle className="h-3.5 w-3.5" />
+            Backtest
           </Link>
           <Link
             href="/pipelines"

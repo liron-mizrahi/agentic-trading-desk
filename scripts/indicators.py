@@ -132,9 +132,9 @@ def trix(close: list[float], period: int = 15, signal: int = 9):
 
 
 def bollinger(close: list[float], period: int = 20, mult: float = 2.0):
-    """Returns (mid, upper, lower, percent_b) for the last bar."""
+    """Returns (mid, upper, lower, percent_b, bandwidth) for the last bar."""
     if len(close) < period:
-        return None, None, None, None
+        return None, None, None, None, None
     window = close[-period:]
     mid = sum(window) / period
     sd = pstdev(window)  # population, like TradingView
@@ -142,7 +142,8 @@ def bollinger(close: list[float], period: int = 20, mult: float = 2.0):
     lower = mid - mult * sd
     rng = upper - lower
     pct_b = (close[-1] - lower) / rng if rng != 0 else 0.5
-    return mid, upper, lower, pct_b
+    bb_bw = (upper - lower) / mid if mid != 0 else 0.0
+    return mid, upper, lower, pct_b, bb_bw
 
 
 # --------------------------------------------------------------------------
@@ -212,7 +213,7 @@ def compute(close: list[float], slope_lookback: int = 5,
     rsi14 = rsi_wilder(close, 14)
     macd_line, macd_sig, macd_hist = macd(close, 12, 26, 9)
     trix_line, trix_sig = trix(close, 15, 9)
-    bb_mid, bb_up, bb_lo, pct_b = bollinger(close, 20, 2.0)
+    bb_mid, bb_up, bb_lo, pct_b, bb_bw = bollinger(close, 20, 2.0)
 
     # Choppiness Index (needs high/low)
     chop = None

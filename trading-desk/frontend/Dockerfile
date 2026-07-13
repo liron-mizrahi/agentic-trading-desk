@@ -9,4 +9,6 @@ COPY . .
 
 EXPOSE 3000
 
+RUN rm -rf /app/.next
+
 CMD ["npm", "run", "dev"]

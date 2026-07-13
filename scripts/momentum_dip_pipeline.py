@@ -300,9 +300,12 @@ def main():
         if ind.get("warning"):
             print(f"⚠ {ind['warning'][:40]} ... ", end="", flush=True)
 
-        # Step 1 filter
+        # Step 2 filter
         result = step1_screen(ticker, data, ind, sector)
         all_results.append(result)
+
+        if result["passed"]:
+            rsi2 = ind.get("rsi2")
 
         if result["passed"]:
             rsi2 = ind.get("rsi2")
@@ -346,6 +349,27 @@ def main():
         print("No candidates passed Step 2. Pipeline halting.")
         return
 
+    # ── News Sentiment Check (informational, no filtering) ──
+    print("─── NEWS SENTIMENT (informational) ───\n", flush=True)
+    for candidate in step2_passed:
+        ticker = candidate["ticker"]
+        sector = candidate.get("sector", "?")
+        try:
+            ok_ns, out_ns = _run([
+                sys.executable, "scripts/news_sentiment.py", "--json", "full", ticker, candidate.get("sector", "Technology")
+            ], timeout=15)
+            if ok_ns:
+                candidate["news_sentiment"] = json.loads(out_ns)
+        except Exception:
+            candidate["news_sentiment"] = {"score": 0.0, "signals": ["unavailable"]}
+        
+        ns = candidate.get("news_sentiment", {})
+        ns_score = ns.get("score", 0)
+        emoji = "🟢" if ns_score > 0.3 else "🔴" if ns_score < -0.3 else "⚪"
+        sigs = ns.get("signals", ["no data"])[:2]
+        print(f"  {emoji} {ticker:6s} | news: {ns_score:+.2f} | {'; '.join(sigs[:2])}", flush=True)
+    print()
+
     # ---- Steps 3 & 4: Cognitive Review + Proposal ----
     print("─── STEP 3 & 4: Cognitive Review + Trade Proposal ───\n", flush=True)
 
@@ -365,6 +389,9 @@ def main():
         print(f"    Target:     ${proposal['take_profit']:.2f}")
         print(f"    Exit rule:  {proposal['exit_rule']}")
         print(f"    Trigger:    {proposal['exit_trigger']}")
+        ns = candidate.get("news_sentiment", {})
+        if ns and ns.get("score", 0) != 0:
+            print(f"    📰 News:   {ns.get('score', 0):+.2f} ({ns.get('source', '?')})")
         print()
 
     # ---- Cache orders (if not dry-run) ----

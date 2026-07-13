@@ -208,6 +208,12 @@ draft → pending_confirm → confirmed → sanity_check_ok → ready_for_execut
 | `yield_spread.py` | Fetch 10Y-2Y yield spread from U.S. Treasury.gov |
 | `analyze.py` | Wrapper that runs full analysis pipeline for one ticker |
 | `generate_report.py` | HTML + PNG chart report generation |
+| `backtester.py` | Time-Warp backtesting engine (three_pillar, momentum_dip, squeeze, all) |
+| `dual_momentum_pipeline.py` | Dual Momentum strategy with relative strength ranking |
+| `squeeze_pipeline.py` | Bollinger Squeeze Breakout strategy |
+| `pead_pipeline.py` | Post-Earnings Announcement Drift strategy |
+| `news_sentiment.py` | News sentiment analysis via Finnhub |
+| `finny_imports.py` | Finnhub API client utilities for news and fundamentals |
 
 ## ⚙️ Cron Jobs
 

@@ -85,13 +85,26 @@ def analyze_ticker(symbol: str, macro_score: Optional[int] = None,
         else:
             macro_score = 0
 
-    # Step 5: Build score input and run score.py
+    # Step 5: Fetch news sentiment (4th pillar)
+    print(f"  📰 Fetching news sentiment for {symbol}...", file=sys.stderr, flush=True)
+    news_data = None
+    try:
+        news = run([sys.executable, "scripts/news_sentiment.py", "--json", "ticker", symbol])
+        if "error" not in news:
+            news_data = news
+            print(f"  📰 News score: {news.get('score', 0):+.2f} (conf: {news.get('confidence', 0):.0%})", file=sys.stderr)
+    except Exception:
+        pass
+
+    # Step 6: Build score input and run score.py
     score_input = {
         "symbol": symbol.upper(),
         "close": closes,
         "macro_score": macro_score,
         "holding": holding,
     }
+    if news_data:
+        score_input["news_sentiment"] = news_data
 
     with open("/tmp/score_input.json", "w") as f:
         json.dump(score_input, f)

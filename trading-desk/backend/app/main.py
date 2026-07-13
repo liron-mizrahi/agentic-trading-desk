@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import close_db, init_db
-from app.routers import analysis, trades, data, pipelines, fundamentals
+from app.routers import analysis, trades, data, pipelines, fundamentals, backtest
 from app.websocket import ws_manager
 
 # ── Logging ───────────────────────────────────────────────
@@ -68,6 +68,7 @@ app.include_router(pipelines.router)
 app.include_router(analysis.router)
 app.include_router(data.router)
 app.include_router(fundamentals.router)
+app.include_router(backtest.router)
 
 
 # ── Health check ──────────────────────────────────────────

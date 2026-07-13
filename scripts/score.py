@@ -76,6 +76,32 @@ def score_momentum(ind: dict) -> tuple[int, str]:
 
 
 # --------------------------------------------------------------------------
+# Pillar 4: News Sentiment (low-weight, -1 to +1)
+# --------------------------------------------------------------------------
+
+def score_news_sentiment(news: Optional[dict]) -> tuple[int, str]:
+    """Score news sentiment from news_sentiment.py output.
+    Lower weight pillar: -1 to +1 instead of -2 to +2.
+    Returns 0 if no data."""
+    if news is None or not isinstance(news, dict):
+        return 0, "no data"
+    
+    score_val = news.get("score", 0.0)
+    confidence = news.get("confidence", 0.0)
+    
+    # Scale down by confidence: low-confidence signals get muted
+    adjusted = round(score_val * confidence, 1)
+    
+    # Convert to int in [-1, +1]
+    if adjusted > 0.3:
+        return 1, f"positive ({score_val:+.2f}, conf {confidence:.0%})"
+    elif adjusted < -0.3:
+        return -1, f"negative ({score_val:+.2f}, conf {confidence:.0%})"
+    else:
+        return 0, f"neutral ({score_val:+.2f}, conf {confidence:.0%})"
+
+
+# --------------------------------------------------------------------------
 # Decision Layer: exhaustion / relentless / rebound
 # --------------------------------------------------------------------------
 
@@ -136,7 +162,7 @@ def _flags(ind: dict) -> dict:
 
 
 def decide(ind: dict, trend: int, mom: int, macro: Optional[int],
-           holding: Optional[bool]) -> dict:
+           holding: Optional[bool], news_score: int = 0) -> dict:
     """
     Decision cascade aligned to the Agentic account style: short-term returns
     via capital rotation. The cycle is enter on rebound → ride → exit on
@@ -219,6 +245,13 @@ def decide(ind: dict, trend: int, mom: int, macro: Optional[int],
         elif action == "RE-ENTRY (new cycle)":
             framing += " ⚠ Adverse macro: entry in reduced size."
 
+    # Adjust for adverse news sentiment (4th pillar — light modifier)
+    if news_score <= -1:
+        if action in ("RE-ENTRY (new cycle)", "TACTICAL REBOUND (counter-trend)"):
+            framing += " 📰 Negative news sentiment: consider tighter stop or reduced size."
+        elif action == "HOLD / OBSERVE" or action == "OBSERVE":
+            framing += " 📰 Negative news sentiment: monitor closely for deterioration."
+
     # Position context
     if in_pos and n_reb >= 2 and action.startswith("HOLD"):
         framing += " (Rebound signals in progress reinforce holding.)"
@@ -234,12 +267,13 @@ def decide(ind: dict, trend: int, mom: int, macro: Optional[int],
 
 def score_symbol(close: list[float], macro_score: Optional[int] = None,
                  symbol: Optional[str] = None, holding: Optional[bool] = None,
-                 slope_lookback: int = 5) -> dict:
+                 slope_lookback: int = 5, news_sentiment: Optional[dict] = None) -> dict:
     ind = I.compute(close, slope_lookback)
     t, t_detail = score_trend(ind)
     m, m_detail = score_momentum(ind)
-    dec = decide(ind, t, m, macro_score, holding)
-    composite = t + m + (macro_score if macro_score is not None else 0)
+    n, n_detail = score_news_sentiment(news_sentiment)
+    dec = decide(ind, t, m, macro_score, holding, n)
+    composite = t + m + (macro_score if macro_score is not None else 0) + n
     return {
         "symbol": symbol,
         "n_bars": ind["n_bars"],
@@ -248,6 +282,7 @@ def score_symbol(close: list[float], macro_score: Optional[int] = None,
             "trend": {"score": t, "detail": t_detail},
             "momentum": {"score": m, "detail": m_detail},
             "macro_sentiment": {"score": macro_score, "detail": "injected from macro_pillar.py"},
+            "news_sentiment": {"score": n, "detail": n_detail},
         },
         "pillar_total": composite,
         "decision": dec,
@@ -258,6 +293,7 @@ def score_symbol(close: list[float], macro_score: Optional[int] = None,
 def render(card: dict) -> str:
     p = card["pillars"]; d = card["decision"]
     ms = p["macro_sentiment"]["score"]
+    ns = p.get("news_sentiment", {}).get("score", 0)
     L = []
     L.append(f"{'═'*54}")
     L.append(f" {card['symbol'] or 'SYMBOL'}   ·   {card['n_bars']} bars")
@@ -302,6 +338,7 @@ def main() -> int:
             macro_score=raw.get("macro_score"),
             symbol=raw.get("symbol"),
             holding=raw.get("holding"),
+            news_sentiment=raw.get("news_sentiment"),
         )
     else:
         import math
